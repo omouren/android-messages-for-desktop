@@ -1,0 +1,25 @@
+language: bash
+
+sudo: required
+services:
+  - docker
+
+before_deploy:
+  - docker build -t local/nativefier .
+  - docker run -v "$TRAVIS_BUILD_DIR":/src local/nativefier --platform "linux" --icon /src/android-messages-logo.png --name "AndroidMessages" "https://messages.android.com" --honest --disable-dev-tools --single-instance --tray /src/
+  - docker run -v "$TRAVIS_BUILD_DIR":/src local/nativefier --platform "windows" --icon /src/android-messages-logo.png --name "Android Messages" "https://messages.android.com" --honest --disable-dev-tools --single-instance --tray /src/
+  - docker run -v "$TRAVIS_BUILD_DIR":/src local/nativefier --platform "mac" --icon /src/android-messages-logo.png --name "Android Messages" "https://messages.android.com" --honest --disable-dev-tools --single-instance --tray /src/
+  - sudo chown -R travis:travis $TRAVIS_BUILD_DIR
+  - for d in */ ; do base=$(basename "$d") ; cd "$base" ; zip -r "$base" * ; mv "${base}.zip" .. ; cd .. ; done;
+
+deploy:
+  provider: releases
+  api_key: $GITHUB_OAUTH_KEY
+  file:
+    - "Android Messages-win32-x64.zip"
+    - "Android Messages-darwin-x64.zip"
+    - "android-messages-linux-x64.zip"
+  skip_cleanup: true
+  on:
+    branch: master
+    tags: true
